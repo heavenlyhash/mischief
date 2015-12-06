@@ -4,3 +4,9 @@
 [submodule ".gopath/src/github.com/go-gl/gl"]
 	path = .gopath/src/github.com/go-gl/gl
 	url = https://github.com/go-gl/gl.git
+[submodule ".gopath/src/github.com/go-gl/mathgl"]
+	path = .gopath/src/github.com/go-gl/mathgl
+	url = https://github.com/go-gl/mathgl.git
+[submodule ".gopath/src/golang.org/x/image"]
+	path = .gopath/src/golang.org/x/image
+	url = https://github.com/golang/image.git
