@@ -3,13 +3,14 @@ package texture
 import (
 	"image"
 	"image/draw"
+	_ "image/png"
 	"io"
 	"os"
 
 	"github.com/go-gl/gl/v3.2-core/gl"
 )
 
-func NewFromFile(pth string) uint32 {
+func FromFile(pth string) uint32 {
 	reader, err := os.OpenFile(pth, os.O_RDONLY, 0)
 	if err != nil {
 		panic(err)
