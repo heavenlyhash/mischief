@@ -1,0 +1,84 @@
+#!/bin/bash
+set -euo pipefail
+
+# Project details
+name="mischief"
+pkg="exultant.us/$name"
+cmd="$pkg/cmd/$name"
+
+
+
+
+# Set up gopath.  Autodetect go install if necessary.
+cd "$( dirname "${BASH_SOURCE[0]}" )"
+export GOPATH="$PWD"/.gopath/
+
+# subcommand arg?
+SUBCOMMAND=${1:-}
+
+# subsection arg?
+SUBSECTION=${2:-"..."}
+SUBSECTION="./$SUBSECTION"
+
+
+
+if [ -z "$SUBCOMMAND" ] ; then
+	(
+		go fmt "$SUBSECTION"
+		go install "$cmd" && {
+			echo -e "\E[1;32minstall successful.\E[0;m\n"
+		} || {
+			echo -e "\E[1;41minstall failed!\E[0;m"
+			exit 8
+		}
+		go test "$SUBSECTION" && {
+			echo -e "\n\E[1;32mall tests green.\E[0;m"
+		} || {
+			echo -e "\n\E[1;41msome tests failed!\E[0;m"
+			exit 4
+		}
+	)
+else
+	case "$SUBCOMMAND" in
+	-)
+		# passthrough for other commands
+		shift
+		go "$@"
+		;;
+	env)
+		echo "GOROOT=`go env GOROOT`"
+		echo "GOPATH=`go env GOPATH`"
+		;;
+	path)
+		echo "$GOPATH"
+		;;
+	init)
+		# it's your responsibility to do this the first time
+		# (we don't do it at the front of every build because it will move submodules if you already have them, and that might not be what you want as you're plowing along)
+		git submodule update --init
+		;;
+	test)
+		set +e ; shift ; shift ; set -e
+		go test -i "$SUBSECTION" "$@" &&
+		go test -v "$SUBSECTION" "$@" && {
+			echo -e "\n\E[1;32mall tests green.\E[0;m"
+		} || {
+			echo -e "\n\E[1;41msome tests failed!\E[0;m"
+			exit 4
+		}
+		;;
+	install)
+		go install "$cmd"
+		;;
+	fmt)
+		go fmt "$SUBSECTION"
+		;;
+	clean)
+		rm -rf "$GOPATH/bin" "$GOPATH/pkg" "$GOPATH/tmp"
+		;;
+	*)
+		echo "Usage: $0 {init|test|install|fmt|clean}" 1>&2;
+		exit 1
+	;;
+	esac
+fi
