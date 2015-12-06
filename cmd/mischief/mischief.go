@@ -39,7 +39,15 @@ func main() {
 	)
 	gl.UseProgram(programID)
 
+	// Configure global settings
+	gl.Enable(gl.DEPTH_TEST)
+	gl.DepthFunc(gl.LESS)
+	gl.ClearColor(0.01, 0.06, 0.03, 1.0)
+
+	// Polllllll
 	for !window.ShouldClose() {
+		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+
 		window.SwapBuffers()
 		glfw.PollEvents()
 	}
