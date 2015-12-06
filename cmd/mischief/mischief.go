@@ -25,7 +25,9 @@ func main() {
 	window.MakeContextCurrent()
 	glfw.SwapInterval(1) // vsync
 
-	gl.Init()
+	if err := gl.Init(); err != nil {
+		panic(err)
+	}
 	// TODO you can load textures after this
 
 	for !window.ShouldClose() {
