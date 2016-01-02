@@ -70,8 +70,6 @@ func main() {
 	textureID := gl.GetUniformLocation(programID, gl.Str("tex\x00"))
 	gl.Uniform1i(textureID, 0) // ?
 
-	gl.BindFragDataLocation(programID, 0, gl.Str("outputColor\x00"))
-
 	// Configure the vertex data
 	// (Erics are somewhat confused by this.  It seems to be poking
 	//  horifficially global variables in video memory by string name...?
