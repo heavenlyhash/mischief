@@ -116,6 +116,7 @@ func main() {
 	// Polllllll
 	for !window.ShouldClose() {
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+		gl.UseProgram(programID)
 
 		// Move camera
 		controls.UpdateCameraFromKeyboard(cam, window)
@@ -123,15 +124,10 @@ func main() {
 		gl.UniformMatrix4fv(cameraID, 1, false, ptrMat4(cam.GetLookMatrix()))
 
 		// Render
-		gl.UseProgram(programID)
-
 		gl.UniformMatrix4fv(modelID, 1, false, &modelMat[0])
-
 		gl.BindVertexArray(vao)
-
 		gl.ActiveTexture(gl.TEXTURE0)
 		gl.BindTexture(gl.TEXTURE_2D, txture)
-
 		gl.DrawArrays(gl.TRIANGLES, 0, 6*2*3)
 
 		// Maintenance
