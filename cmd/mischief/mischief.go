@@ -44,10 +44,10 @@ func main() {
 	}
 
 	// ??? WIZARDRY
-	programID := render.NewProgram(
+	programID := uint32(render.NewProgram(
 		shader.PlaceholderVertexShader,
 		shader.PlaceholderFragmentShader,
-	)
+	))
 	gl.UseProgram(programID)
 
 	// Load a texture.
