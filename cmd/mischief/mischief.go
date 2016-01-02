@@ -55,7 +55,7 @@ func main() {
 
 	// Okay, start hucking things on the screen
 
-	projectionMat := mgl32.Perspective(mgl32.DegToRad(45.0), float32(viewport.X())/float32(viewport.Y()), 0.1, 10.0)
+	projectionMat := mgl32.Perspective(mgl32.DegToRad(75.0), float32(viewport.X())/float32(viewport.Y()), 0.1, 50.0)
 	projectionID := gl.GetUniformLocation(programID, gl.Str("projection\x00"))
 	gl.UniformMatrix4fv(projectionID, 1, false, &projectionMat[0])
 
