@@ -43,24 +43,23 @@ func main() {
 		panic(err)
 	}
 
-	// ??? WIZARDRY
+	// Load a texture.  (Has GL calls, but happily program-agnostic.)
+	txture := texture.FromFile("assets/texture/placeholder.png")
+
+	// Create a primitive GL program
 	programID := uint32(render.NewProgram(
 		shader.PlaceholderVertexShader,
 		shader.PlaceholderFragmentShader,
 	))
 	gl.UseProgram(programID)
 
-	// Load a texture.
-	txture := texture.FromFile("assets/texture/placeholder.png")
-
-	// Okay, start hucking things on the screen
-
+	// Configure (nearly)fixed values in the GL program
 	projectionMat := mgl32.Perspective(mgl32.DegToRad(75.0), float32(viewport.X())/float32(viewport.Y()), 0.1, 50.0)
 	projectionID := gl.GetUniformLocation(programID, gl.Str("projection\x00"))
 	gl.UniformMatrix4fv(projectionID, 1, false, &projectionMat[0])
 
 	cam := &controls.Camera{}
-	cam.Drifter.InitDefaults(mgl32.Vec3{3, 3, 3})
+	cam.Drifter.InitDefaults(mgl32.Vec3{2, 2, -3})
 	cameraID := gl.GetUniformLocation(programID, gl.Str("camera\x00"))
 
 	modelMat := mgl32.Ident4()
@@ -68,12 +67,9 @@ func main() {
 	gl.UniformMatrix4fv(modelID, 1, false, &modelMat[0])
 
 	textureID := gl.GetUniformLocation(programID, gl.Str("tex\x00"))
-	gl.Uniform1i(textureID, 0) // ?
+	gl.Uniform1i(textureID, 0) // ?  a zero is a 'sampler2D', evidentally
 
-	// Configure the vertex data
-	// (Erics are somewhat confused by this.  It seems to be poking
-	//  horifficially global variables in video memory by string name...?
-	//   ... yes, yes it is.  Even better: they're strings in your "program".)
+	// Configure the vertex data -- this is a just a big hardcoded cube
 
 	var vao uint32
 	gl.GenVertexArrays(1, &vao)
