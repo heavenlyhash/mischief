@@ -105,6 +105,9 @@ func main() {
 		prog.SetModel(mgl32.Ident4())
 		obj.Render(tCache)
 		checkGLError()
+		prog.SetModel(mgl32.Translate3D(1, 1, 1))
+		obj.Render(tCache)
+		checkGLError()
 
 		// Maintenance
 		window.SwapBuffers()
