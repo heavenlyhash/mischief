@@ -23,7 +23,6 @@ func (obj *Cube) Render(tCache *texture.Cache) {
 
 	// Do draw!
 	gl.DrawArrays(gl.TRIANGLES, 0, 6*2*3)
-	gl.GetError()
 }
 
 // Precomputed cube vertices data.  Layed out to match program already.
