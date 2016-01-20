@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"runtime"
 
 	"github.com/go-gl/gl/v3.2-core/gl"
@@ -9,10 +10,9 @@ import (
 
 	"exultant.us/mischief/cmd/mischief/controls"
 	"exultant.us/mischief/lib/maath"
-	"exultant.us/mischief/render"
-	"exultant.us/mischief/render/shader"
+	"exultant.us/mischief/mirage"
+	"exultant.us/mischief/render/prag"
 	"exultant.us/mischief/render/texture"
-	"exultant.us/mischief/render/vertex"
 )
 
 func main() {
@@ -25,6 +25,7 @@ func main() {
 
 	viewport := maath.Vec2i{800, 600}
 
+	// SO MUCH SETUP.  Start with setting up window and GL pre-init params.
 	glfw.WindowHint(glfw.ContextVersionMajor, 3)
 	glfw.WindowHint(glfw.ContextVersionMinor, 2)
 	glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
@@ -37,62 +38,33 @@ func main() {
 	}
 	window.MakeContextCurrent()
 	glfw.SwapInterval(1) // vsync
-
 	// Initialize Glow
 	if err := gl.Init(); err != nil {
 		panic(err)
 	}
-
-	// Load a texture.  (Has GL calls, but happily program-agnostic.)
-	txture := texture.FromFile("assets/texture/placeholder.png")
-
-	// Create a primitive GL program
-	programID := uint32(render.NewProgram(
-		shader.PlaceholderVertexShader,
-		shader.PlaceholderFragmentShader,
-	))
-	gl.UseProgram(programID)
-
-	// Configure (nearly)fixed values in the GL program
-	projectionMat := mgl32.Perspective(mgl32.DegToRad(75.0), float32(viewport.X())/float32(viewport.Y()), 0.1, 50.0)
-	projectionID := gl.GetUniformLocation(programID, gl.Str("projection\x00"))
-	gl.UniformMatrix4fv(projectionID, 1, false, &projectionMat[0])
-
-	cam := &controls.Camera{}
-	cam.Drifter.InitDefaults(mgl32.Vec3{2, 2, -3})
-	cameraID := gl.GetUniformLocation(programID, gl.Str("camera\x00"))
-
-	modelMat := mgl32.Ident4()
-	modelID := gl.GetUniformLocation(programID, gl.Str("model\x00"))
-	gl.UniformMatrix4fv(modelID, 1, false, &modelMat[0])
-
-	textureID := gl.GetUniformLocation(programID, gl.Str("tex\x00"))
-	gl.Uniform1i(textureID, 0) // ?  a zero is a 'sampler2D', evidentally
-
-	// Configure the vertex data -- this is a just a big hardcoded cube
-
-	var vao uint32
-	gl.GenVertexArrays(1, &vao)
-	gl.BindVertexArray(vao)
-
-	var vbo uint32
-	gl.GenBuffers(1, &vbo)
-	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-	gl.BufferData(gl.ARRAY_BUFFER, len(vertex.Cube)*4, gl.Ptr(vertex.Cube), gl.STATIC_DRAW)
-
-	vertAttrib := uint32(gl.GetAttribLocation(programID, gl.Str("vert\x00")))
-	gl.EnableVertexAttribArray(vertAttrib)
-	gl.VertexAttribPointer(vertAttrib, 3, gl.FLOAT, false, 5*4, gl.PtrOffset(0))
-
-	texCoordAttrib := uint32(gl.GetAttribLocation(programID, gl.Str("vertTexCoord\x00")))
-	gl.EnableVertexAttribArray(texCoordAttrib)
-	gl.VertexAttribPointer(texCoordAttrib, 2, gl.FLOAT, false, 5*4, gl.PtrOffset(3*4))
-
-	// Configure global settings
+	// Configure yet more global GL settings
 	gl.Enable(gl.DEPTH_TEST)
 	gl.DepthFunc(gl.LESS)
 	gl.ClearColor(0.01, 0.06, 0.03, 1.0)
 
+	// Load textures.
+	// Best to do this up front so we don't have random stalls later as things
+	//  discover they need textures during their first render.  (This has GL
+	//  calls, but happily program-agnostic.)
+	tCache := texture.NewCache()
+	tCache.Load("placeholder", "assets/texture/placeholder.png")
+	checkGLError()
+
+	// Make a program.
+	prog := mirage.NewBasicProgram()
+	checkGLError()
+	// Tell it to preload all its stuff.
+	prog.Preload()
+	checkGLError()
+
+	// Make camera.
+	cam := &controls.Camera{}
+	cam.Drifter.InitDefaults(mgl32.Vec3{2, 2, -3})
 	// Grab cursor.  Route to camera.
 	window.SetCursorPosCallback(
 		func(window *glfw.Window, xpos, ypos float64) {
@@ -107,22 +79,32 @@ func main() {
 		},
 	)
 
+	// Make a thing!
+	obj := &mirage.Cube{}
+
 	// Polllllll
 	for !window.ShouldClose() {
+		checkGLError()
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-		gl.UseProgram(programID)
 
 		// Move camera
 		controls.UpdateCameraFromKeyboard(cam, window)
 		cam.Tick()
-		gl.UniformMatrix4fv(cameraID, 1, false, ptrMat4(cam.GetLookMatrix()))
+
+		// Tell the program it's in charge.
+		// Update the major uniforms (e.g. camera).
+		prog.Arrange()
+		projectionMtrx := mgl32.Perspective(mgl32.DegToRad(75.0), float32(viewport.X())/float32(viewport.Y()), 0.1, 50.0)
+		prog.(prag.ProgramWithProjection).SetProjection(projectionMtrx)
+		checkGLError()
+		prog.(prag.ProgramWithCamera).SetLook(cam.GetLookMatrix())
+		checkGLError()
 
 		// Render
-		gl.UniformMatrix4fv(modelID, 1, false, &modelMat[0])
-		gl.BindVertexArray(vao)
-		gl.ActiveTexture(gl.TEXTURE0)
-		gl.BindTexture(gl.TEXTURE_2D, txture)
-		gl.DrawArrays(gl.TRIANGLES, 0, 6*2*3)
+		// (model coords still hardcode, fixme shortly)
+		prog.SetModel(mgl32.Ident4())
+		obj.Render(tCache)
+		checkGLError()
 
 		// Maintenance
 		window.SwapBuffers()
@@ -130,6 +112,9 @@ func main() {
 	}
 }
 
-func ptrMat4(x mgl32.Mat4) *float32 {
-	return &(x[0])
+func checkGLError() {
+	err := gl.GetError()
+	if err != 0 {
+		panic(fmt.Sprintf("gl error: %d", err))
+	}
 }
