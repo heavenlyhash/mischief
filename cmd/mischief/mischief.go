@@ -82,6 +82,12 @@ func main() {
 	// Make a thing!
 	obj := &mirage.Cube{}
 
+	// Tell the program it's in charge, then set some mostly-static stuff.
+	prog.Arrange()
+	projectionMtrx := mgl32.Perspective(mgl32.DegToRad(75.0), float32(viewport.X())/float32(viewport.Y()), 0.1, 50.0)
+	prog.(prag.ProgramWithProjection).SetProjection(projectionMtrx)
+	checkGLError()
+
 	// Polllllll
 	for !window.ShouldClose() {
 		checkGLError()
@@ -91,12 +97,9 @@ func main() {
 		controls.UpdateCameraFromKeyboard(cam, window)
 		cam.Tick()
 
-		// Tell the program it's in charge.
+		// Remind the program it's in charge.
 		// Update the major uniforms (e.g. camera).
 		prog.Arrange()
-		projectionMtrx := mgl32.Perspective(mgl32.DegToRad(75.0), float32(viewport.X())/float32(viewport.Y()), 0.1, 50.0)
-		prog.(prag.ProgramWithProjection).SetProjection(projectionMtrx)
-		checkGLError()
 		prog.(prag.ProgramWithCamera).SetLook(cam.GetLookMatrix())
 		checkGLError()
 
