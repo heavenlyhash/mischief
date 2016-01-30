@@ -79,6 +79,15 @@ func main() {
 		},
 	)
 
+	// Set hooks to adapt to window resizes.
+	window.SetFramebufferSizeCallback(func(w *glfw.Window, width int, height int) {
+		// adjust our cached knowledge of viewport state because camera handling needs to keep resetting cursor
+		viewport = maath.Vec2i{width, height}
+		// change the main viewport to fill the new window size
+		gl.Viewport(0, 0, int32(width), int32(height))
+		checkGLError()
+	})
+
 	// Make a thing!
 	obj := &mirage.Cube{}
 
