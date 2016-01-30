@@ -20,6 +20,10 @@ func (cam Camera) GetLookMatrix() mgl32.Mat4 {
 }
 
 func UpdateCameraFromKeyboard(cam *Camera, window *glfw.Window) {
+	if window.GetKey(glfw.KeyLeftSuper) == glfw.Press {
+		return
+	}
+
 	forward := window.GetKey(glfw.KeyW) == glfw.Press
 	backward := window.GetKey(glfw.KeyS) == glfw.Press
 	left := window.GetKey(glfw.KeyA) == glfw.Press
