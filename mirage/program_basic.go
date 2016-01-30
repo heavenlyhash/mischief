@@ -16,6 +16,8 @@ type BasicProgram struct {
 	uniform_tex        uint32
 	attrib_vert        uint32
 	attrib_textCoord   uint32
+
+	vao, vbo uint32
 }
 
 var (
@@ -93,16 +95,15 @@ func (p *BasicProgram) Arrange() {
 	gl.UseProgram(uint32(p.prog))
 
 	// Ask GL for handles to arrays.  Bind them.
-	var vao, vbo uint32
-	gl.GenVertexArrays(1, &vao)
-	gl.GenBuffers(1, &vbo)
+	gl.GenVertexArrays(1, &p.vao)
+	gl.GenBuffers(1, &p.vbo)
 
 	// ?
 	gl.Uniform1i(int32(p.uniform_tex), 0) // ?
 
 	// Turn around and tell GL that we're going to use that array.
-	gl.BindVertexArray(vao)
-	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
+	gl.BindVertexArray(p.vao)
+	gl.BindBuffer(gl.ARRAY_BUFFER, p.vbo)
 
 	// Enable the 'attributes' to the GL program.
 	// They're not enabled by default because GL loves to be redundant.
@@ -120,4 +121,9 @@ func (p *BasicProgram) Arrange() {
 	// - offset per stride
 	gl.VertexAttribPointer(p.attrib_vert, 3, gl.FLOAT, false, 5*4, gl.PtrOffset(0))
 	gl.VertexAttribPointer(p.attrib_textCoord, 2, gl.FLOAT, false, 5*4, gl.PtrOffset(3*4))
+}
+
+func (p *BasicProgram) Drop() {
+	gl.DeleteBuffers(1, &p.vbo)
+	gl.DeleteVertexArrays(1, &p.vao)
 }

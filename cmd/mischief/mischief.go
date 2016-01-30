@@ -121,6 +121,9 @@ func main() {
 		obj.Render(tCache)
 		checkGLError()
 
+		// Free gpu buffers
+		prog.Drop()
+
 		// Maintenance
 		window.SwapBuffers()
 		glfw.PollEvents()

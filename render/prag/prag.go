@@ -38,6 +38,7 @@ type Program interface {
 	SetModel(mgl32.Mat4) // we consider a "where" matrix too common to be optional
 	Preload()            // called once at creation.  set up your textures, etc.  (grabbag, seemed needed)
 	Arrange()            // called pre-draw group.  bind vao, set all attribs up, etc.  (effectively, magic stuff and offsets that your RenderableThing's data layout must agree with go in here.)
+	Drop()               // called pairwise with arrange, when things be done.  should do frees.
 
 	// Try to specify any additional interesting uniforms via interfaces.
 	//  See e.g. `ProgramWithCamera` for an example.
