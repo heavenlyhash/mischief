@@ -37,7 +37,8 @@ func (obj *Drifter) InitDefaults(position mgl32.Vec3) {
 	obj.Speed = 0.5
 	obj.Drag = 0.5
 	obj.rotationSpeed = 0.001
-	obj.rotation = mgl32.Vec2{math.Pi / 1.5, math.Pi / 1.5}
+	obj.rotation = mgl32.Vec2{math.Pi / 2, math.Pi * 2}
+	//	obj.Facing = position.Add(mgl32.Vec3{0, 0, 1})
 	obj.Tick()
 }
 
@@ -59,6 +60,10 @@ func (obj *Drifter) Rotate(vec mgl32.Vec2) {
 
 func (obj *Drifter) Tick() {
 	obj.Velocity = obj.Velocity.Add(obj.Acceleration).Mul(obj.Drag)
+	if obj.Velocity.ApproxEqualThreshold(mgl32.Vec3{}, 0.001) {
+		// clamp if close to zero, watching decimals flap is harmless but irritates me
+		obj.Velocity = mgl32.Vec3{}
+	}
 	obj.Position = obj.Position.Add(obj.Velocity)
 	obj.Facing = obj.calculateFacingUnit()
 	fmt.Printf("::  %#v\n  v %#v\n  a %#v\n  f %#v\n", obj.Position, obj.Velocity, obj.Acceleration, obj.Facing)

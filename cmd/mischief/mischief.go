@@ -11,6 +11,7 @@ import (
 	"exultant.us/mischief/cmd/mischief/controls"
 	"exultant.us/mischief/lib/maath"
 	"exultant.us/mischief/mirage"
+	"exultant.us/mischief/mirage/chunk"
 	"exultant.us/mischief/render/prag"
 	"exultant.us/mischief/render/texture"
 )
@@ -64,7 +65,7 @@ func main() {
 
 	// Make camera.
 	cam := &controls.Camera{}
-	cam.Drifter.InitDefaults(mgl32.Vec3{2, 2, -3})
+	cam.Drifter.InitDefaults(mgl32.Vec3{-5, 5, 0})
 	// Grab cursor.  Route to camera.
 	window.SetCursorPosCallback(
 		func(window *glfw.Window, xpos, ypos float64) {
@@ -90,6 +91,7 @@ func main() {
 
 	// Make a thing!
 	obj := &mirage.Cube{}
+	chnk := &chunk.Model{}
 
 	// Tell the program it's in charge, then set some mostly-static stuff.
 	prog.Arrange()
@@ -116,9 +118,30 @@ func main() {
 		// (model coords still hardcode, fixme shortly)
 		prog.SetModel(mgl32.Ident4())
 		obj.Render(tCache)
-		checkGLError()
-		prog.SetModel(mgl32.Translate3D(1, 1, 1))
+		prog.SetModel(mgl32.Translate3D(0, 0, 2))
 		obj.Render(tCache)
+		prog.SetModel(mgl32.Translate3D(0, 0, 4))
+		obj.Render(tCache)
+		prog.SetModel(mgl32.Translate3D(0, 0, 6))
+		obj.Render(tCache)
+		prog.SetModel(mgl32.Translate3D(0, 0, 8))
+		obj.Render(tCache)
+		prog.SetModel(mgl32.Translate3D(2, 0, 6))
+		obj.Render(tCache)
+		prog.SetModel(mgl32.Translate3D(4, 0, 4))
+		obj.Render(tCache)
+		prog.SetModel(mgl32.Translate3D(-2, 0, 4))
+		obj.Render(tCache)
+		prog.SetModel(mgl32.Translate3D(-4, 0, 4))
+		obj.Render(tCache)
+		checkGLError()
+
+		prog.SetModel(mgl32.Translate3D(5, 0, 5))
+		chnk.Render(tCache)
+		checkGLError()
+
+		prog.SetModel(mgl32.Translate3D(-5, 0, 0))
+		chnk.Render(tCache)
 		checkGLError()
 
 		// Free gpu buffers

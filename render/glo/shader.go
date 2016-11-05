@@ -41,10 +41,11 @@ const (
 
 func CompileShader(t ShaderType, src string) Shader {
 	s := Shader(gl.CreateShader(uint32(t)))
-	srcCstr := gl.Str(src + "\x00")
+	src_cstrs, src_cstrsFreeFn := gl.Strs(src + "\x00")
 	// If for some reason you were doing a ton of different shaders,
 	//  you could see this as mutable.  But we're not exposing that.  why.
-	gl.ShaderSource(uint32(s), 1, &srcCstr, nil)
+	gl.ShaderSource(uint32(s), 1, src_cstrs, nil)
+	src_cstrsFreeFn()
 	gl.CompileShader(uint32(s))
 	// Get compile status and errors back out from this nasty API.
 	status := s.GetParameter(ShaderPCompileStatus)
