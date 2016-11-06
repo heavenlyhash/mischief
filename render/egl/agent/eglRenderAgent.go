@@ -8,12 +8,19 @@ import (
 	"exultant.us/mischief/render/egl/window"
 )
 
-func New() *Renderer {
-	return &Renderer{}
+func New(wiring Wiring) *Renderer {
+	return &Renderer{
+		wiring: wiring,
+	}
 }
 
 type Renderer struct {
-	state state
+	state  state
+	wiring Wiring
+}
+
+type Wiring struct {
+	callNextFrame <-chan func()
 }
 
 type state struct {
@@ -42,6 +49,16 @@ func (a *Renderer) step() {
 
 	// Clear screen (appropriate to just redo in a FPS-style always-changing view).
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+
+	// Call arbitrary funcs that were pushed into our todo list.
+	// (Texture loading currently flies through here, for example.)
+	for {
+		callme, ok := <-a.wiring.callNextFrame
+		if !ok {
+			break
+		}
+		callme()
+	}
 
 	// Render
 	// TODO thunks go here
