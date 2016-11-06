@@ -71,12 +71,16 @@ valid, and the API helps you make sure you called everything, no more and no les
 
 */
 
-func CompileProgram(shaders ...struct {
-	shaderMode int
-	shaderSrc  string
-}) *Program {
+import (
+	"fmt"
+	"strings"
+
+	"github.com/go-gl/gl/v3.2-core/gl"
+)
+
+func CompileProgram(shaders []Shader) *Program {
 	p := &Program{}
-	p.link()
+	p.link(shaders)
 	p.initVAO()
 	return p
 }
@@ -91,13 +95,44 @@ type Program struct {
 	}
 }
 
-func (p *Program) link() {
+func (p *Program) link(shaders []Shader) {
+	p.glHandle = gl.CreateProgram()
+	for _, shader := range shaders {
+		gl.AttachShader(uint32(p.glHandle), uint32(shader))
+	}
+	gl.LinkProgram(uint32(p.glHandle))
+	// Get compile status and errors back out from this nasty API.
+	status := p.getParameter(gl.LINK_STATUS)
+	if status == gl.FALSE {
+		log := p.getCompileLog()
+		panic(fmt.Errorf("failed to compile program: %v", log))
+	}
 }
+
+// Helper method for reading int params from program.
+// Used in other what-when-wrong detection.
+func (p *Program) getParameter(param uint32) int {
+	var v int32
+	gl.GetProgramiv(uint32(p.glHandle), param, &v)
+	return int(v)
+}
+
+func (p *Program) getCompileLog() string {
+	l := p.getParameter(gl.INFO_LOG_LENGTH)
+	if l <= 0 {
+		return ""
+	}
+	buf := make([]byte, l)
+	ptr := gl.Ptr(buf)
+	gl.GetShaderInfoLog(uint32(p.glHandle), int32(l), nil, (*uint8)(ptr))
+	return strings.TrimRight(string(buf), "\x00")
+}
+
 func (p *Program) initVAO() {
 	// REVIEW: we may want to make these part of the same API as buffer fabbing,
 	//  because something needs to make filling those arrays make any goddamn sense too.
 	gl.GenVertexArrays(1, &p.vao_glHandle) // Ask for VAO allocation.
-	gl.BindVertexArray(p.vao)              // Turn around and bind it.
+	gl.BindVertexArray(p.vao_glHandle)     // Turn around and bind it.
 }
 
 func (p *Program) Bind(fieldName string, yourState interface{}, nextFn func(*BoundProgram)) {
